@@ -1,0 +1,1 @@
+type t = { env: Environment.t; globals: Environment.t }
