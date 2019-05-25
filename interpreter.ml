@@ -106,23 +106,21 @@ let rec interpret state stmnt =
 
       (* 
         We can't have dynamic dispatch like the java interface uses, and we
-        can't have cyclical module reference, so we can't put the `Statement
+        can't have cyclical module reference, so we can't save the `Statement
         list` or `Block` in a `Value.t`. The work-around here is to take
         advantange of the relation between objects and closures. [Objects are
         just a poor man's closures][1] or whatever.
 
         [1]: http://wiki.c2.com/?ClosuresAndObjectsAreEquivalent
+
+        Basically `env` and `f_state` are capturing the current value of the
+        environment so the `f` we define next can close over them. Basically
+        using Ocaml's closures instead of implementing capture ourselves.
       *)
+      let env = Environment.create ?enclosing: (Some state.env) () in
+      let f_state = { globals = state.globals; env } in
+
       let f args = 
-        let env = Environment.create ?enclosing: (Some state.globals) () in
-
-        (* 
-          Here's where we capture the enclosing state. For lexical closures
-          we'd need to do a bit more, but you get the idea. This would be a
-          lot harder wihtout mutation, so thanks Ocaml.
-        *) 
-        let f_state = { globals = state.globals; env; } in
-
         (* bind params to args in f_state *)
         List.iter (fun (p, a) -> Environment.define f_state.env p.lexem a) (Utils.zip r.params args);
 
@@ -135,6 +133,7 @@ let rec interpret state stmnt =
         end;
         !retval
       in 
+
       let value = Value.of_ocaml param_count f in
       Environment.define state.env r.func_name.lexem value
     | Return r -> 
