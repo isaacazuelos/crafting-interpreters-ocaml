@@ -8,6 +8,8 @@ type t = {
   mutable globals: Environment.t;
 }
 
+exception Return of Value.t
+
 let create () = 
   let globals = Environment.create () in
   let state = { globals; env = globals; } in
@@ -124,11 +126,23 @@ let rec interpret state stmnt =
         (* bind params to args in f_state *)
         List.iter (fun (p, a) -> Environment.define f_state.env p.lexem a) (Utils.zip r.params args);
 
-        interpret f_state (Block r.func_body);
-        Value.LoxNil
+        let retval = ref Value.LoxNil in
+
+        begin try 
+            interpret f_state (Block r.func_body);
+          with
+          | Return v -> retval := v
+        end;
+        !retval
       in 
       let value = Value.of_ocaml param_count f in
       Environment.define state.env r.func_name.lexem value
+    | Return r -> 
+      let retval = match r.value with 
+        | None -> Value.LoxNil
+        | Some e -> eval state e
+      in
+      raise (Return retval);
   with
   | Value.TypeError { expected; found } -> 
     let found = Value.string_of_type_name found in

@@ -27,7 +27,7 @@ let string_of_type_name tn = match tn with
 let string_of value = match value with
   | LoxBool   b -> string_of_bool b
   | LoxNil      -> "nil"
-  | LoxNumber n -> string_of_float n
+  | LoxNumber n -> Printf.sprintf "%g" n
   | LoxString s -> s
   | LoxFunc   r -> Printf.sprintf "<fun of %d args>" r.arity
 

@@ -175,6 +175,16 @@ and print_statement parser =
   consume_ parser Semicolon "Expect ';' after value.";
   Print e
 
+and return_statment parser =
+  let keyword = advance parser in
+  let value = if check parser Semicolon then
+      None
+    else 
+      Some (expression parser) 
+  in
+  consume_ parser Semicolon "Expected ';' after return value.";
+  Statement.Return { keyword; value }
+
 and expression_statement parser = 
   let e = expression parser in 
   consume_ parser Semicolon "Expect ';' after expression.";
@@ -265,6 +275,7 @@ and for_stmnt parser =
     else 
       None
   in 
+  advance_ parser;
 
   let increment = if not (check parser Semicolon) then
       Some (expression parser)
@@ -308,6 +319,7 @@ and declaration parser: stmnt option =
 and statement parser =
   match (peek parser).token_type with
   | Print     -> advance_ parser; print_statement parser
+  | Return    -> return_statment parser
   | LeftBrace -> Block (block parser)
   | If        -> advance_ parser; if_stmnt parser
   | While     -> advance_ parser; while_stmnt parser

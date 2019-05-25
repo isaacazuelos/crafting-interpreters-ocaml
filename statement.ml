@@ -8,11 +8,13 @@ type stmnt =
   | IfStmnt of if_stmnt
   | While of while_stmnt
   | Function of prototype
+  | Return of return
 and var_decl    = { name: Scanner.token; initalizer: expr option }
 and block       = { statements: stmnt list; open_brace: Scanner.token }
 and if_stmnt    = { condition: expr; true_branch: stmnt; false_branch: stmnt option }
 and while_stmnt = { loop_condition: expr; body: stmnt }
 and prototype   = { func_name: Scanner.token; params: Scanner.token list; func_body: block }
+and return      = { keyword: Scanner.token; value: expr option }
 
 let location stmnt = 
   match stmnt with
@@ -23,6 +25,7 @@ let location stmnt =
   | IfStmnt    r -> location r.condition
   | While      r -> location r.loop_condition
   | Function   r -> r.func_name
+  | Return     r -> r.keyword
 
 let rec string_of s = 
   let sos = string_of in
@@ -50,3 +53,6 @@ let rec string_of s =
     let params = String.concat ", " (List.map (fun (p: Scanner.token) -> Scanner.lexem p) r.params) in
     let body = "{ " ^ String.concat ", " (List.map sos r.func_body.statements) ^ " }" in
     "fun " ^ name ^ " (" ^ params ^ ") " ^ body
+  | Return r -> "return" ^ match r.value with
+    | None -> ";" 
+    | Some e -> soe e ^ ";"
